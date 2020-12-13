@@ -56,7 +56,8 @@ Alternatively, the data can be downloaded from [Dataset: Activity monitoring dat
 
 This piece of code downloads and unzips the "activity.zip" from the link mentioned above in case it is not present in the current working directory. Otherwise, it checks if it is unzipped, and unzips it if it is not. 
 
-```{r, warning=FALSE, message=FALSE}
+
+```r
 if(!file.exists("activity.zip")){
   url <- "https://d396qusza40orc.cloudfront.net/repdata%2Fdata%2Factivity.zip"
   download.file(url, destfile="activity.zip")
@@ -64,16 +65,17 @@ if(!file.exists("activity.zip")){
 } else if (!file.exists("activity.csv")){
   unzip(zipfile="activity.zip")
   }
-
 ```
 
 ### Loading the data into R  
-```{r, warning=FALSE, message=FALSE}
+
+```r
 data<- read.csv("activity.csv")
 ```
 
 ### Processing the data  
-```{r, warning=FALSE, message=FALSE}
+
+```r
 data$date <- as.Date(data$date) # Setting the class of the  date variable to be Date
 ```
 
@@ -83,7 +85,8 @@ data$date <- as.Date(data$date) # Setting the class of the  date variable to be 
 The total number of steps taken per day is calculated and visualized on a histogram plot. At this stage, the NA values are ignored. Also, the mean and median of the total number of steps taken per day are calculated. These, will be compared to the results when are NA values are imputed.  
 
 ### Histogram of the total number of steps taken each day (ignoring NAs)
-```{r, warning=FALSE, message=FALSE}
+
+```r
 library(tidyverse)
 # ignoring NAs 
 p<- data %>% group_by(date) %>% summarise(stepsum=sum(steps, na.rm=T))
@@ -91,11 +94,19 @@ p %>% ggplot(aes(stepsum)) + geom_histogram() + xlab("Total Number of Steps per 
   ylab("Frequency")
 ```
 
+![](PA1_template_files/figure-html/unnamed-chunk-4-1.png)<!-- -->
+
 ### Mean and median number of steps taken each day (ignoring NAs)
-```{r, warning=FALSE, message=FALSE}
+
+```r
 # mean and median, NAs ignored
 mm_na<- p %>% summarise(mean=mean(stepsum), median=median(stepsum))
 data.frame(mm_na)
+```
+
+```
+##      mean median
+## 1 9354.23  10395
 ```
 
 
@@ -104,7 +115,8 @@ data.frame(mm_na)
 A time series plot of the 5-minute intervals and the average (across all days) number of steps taken was made to see the average daily activity pattern.  
 
 ### Time series plot of the average number of steps taken
-```{r, warning=FALSE, message=FALSE}
+
+```r
 library(tidyverse)
 ts<- data %>% group_by(interval) %>% summarise(average=mean(steps, na.rm = T))
 breaks <- c(0,500, 1000, 1500, 2000)
@@ -116,11 +128,14 @@ ts %>% ggplot(aes(interval,average)) + geom_line() +
   xlab("5 Minute Intervals in a 24 Hours Period") +
   ylab("Average Number of Steps") +
   ggtitle("Average Number of Steps across all Days in 5 Minute Intervals")
-```  
+```
+
+![](PA1_template_files/figure-html/unnamed-chunk-6-1.png)<!-- -->
 
 
 ### The 5-minute interval that contains the maximum number of steps is: 
-```{r , results='asis', warning=FALSE, message=FALSE}
+
+```r
 maxint <- ts$interval[which.max(ts$average)]
 maxint2<- maxint + 5
 library(stringr)
@@ -131,26 +146,45 @@ maxint2<- format(strptime(maxint2,format="%H%M"), format= "%H:%M")
 paste(maxint,maxint2, sep=" - ")
 ```
 
+[1] "08:35 - 08:40"
+
 ## Imputing missing values  
 
 ### Only the first column has NAs; steps  
-```{r, warning=FALSE, message=FALSE}
+
+```r
 sapply(data, function(x)any(is.na(x)))
-```  
+```
+
+```
+##    steps     date interval 
+##     TRUE    FALSE    FALSE
+```
 
 ### The total number of missing values in the dataset is:
-```{r, warning=FALSE, message=FALSE}
+
+```r
 index_na<- which(is.na(data$step))
 length(index_na)
-```  
+```
+
+```
+## [1] 2304
+```
 
 ### The percentage of missing values in the dataset is:
-```{r, warning=FALSE, message=FALSE}
+
+```r
 mean(is.na(data$step))*100
 ```
 
+```
+## [1] 13.11475
+```
+
 ### Imputing NAs of *steps* strategy: Replacing NAs with the mean for that 5-minute interval
-```{r, warning=FALSE, message=FALSE}
+
+```r
 imputedata <- data %>% group_by(interval) %>% mutate(avg=mean(steps, na.rm=T))
 index_na<- which(is.na(data$step))
 imputedata$steps[index_na] <- imputedata$avg[index_na]
@@ -158,12 +192,19 @@ imputedata <- imputedata %>% select(steps,date,interval)
 ```
 
 ### Checking that there are no more NAs
-```{r, warning=FALSE, message=FALSE}
+
+```r
 sapply(imputedata, function(x)any(is.na(x)))
-```  
+```
+
+```
+##    steps     date interval 
+##    FALSE    FALSE    FALSE
+```
 
 ### Histogram of the total number of steps taken each day (imputed NAs)
-```{r, warning=FALSE, message=FALSE}
+
+```r
 library(tidyverse)
 # imputed NAs, i.e. no more NAs
 n <- imputedata %>% group_by(date) %>% summarise(stepsum=sum(steps))
@@ -171,11 +212,19 @@ n %>% ggplot(aes(stepsum)) + geom_histogram() + xlab("Total Number of Steps per 
   ylab("Frequency")
 ```
 
+![](PA1_template_files/figure-html/unnamed-chunk-13-1.png)<!-- -->
+
 ### Mean and median number of steps taken each day (imputed NAs)
-```{r, warning=FALSE, message=FALSE}
+
+```r
 # mean and median, NAs imputed
 mm_im<- n %>% summarise(mean=mean(stepsum), median=median(stepsum))
 data.frame(mm_im)
+```
+
+```
+##       mean   median
+## 1 10766.19 10766.19
 ```
 
 ### Do these values differ from the estimates from the first part of the assignment? What is the impact of imputing missing data on the estimates of the total daily number of steps?  
@@ -187,7 +236,8 @@ The mean increased after replacing missing values with the mean value for the co
 A panel time series plot for each of "weekday" and "weekend" of the 5-minute intervals and the average (across all days) number of steps taken was made to see and compare the average daily activity pattern. To do this, a new factor variable in the dataset with two levels “weekday” and “weekend” was created indicating whether a given date is a weekday or weekend day.  
 
 ### Time series plot of the average number of steps taken for weekdays and weekends
-```{r, warning=FALSE, message=FALSE}
+
+```r
 library(tidyverse)
 weekend <- c("Saturday", "Sunday")
 imputets<- imputedata %>%
@@ -205,11 +255,27 @@ imputets %>% ggplot(aes(interval,average)) + geom_line() +
   facet_grid(day ~ .)
 ```
 
+![](PA1_template_files/figure-html/unnamed-chunk-15-1.png)<!-- -->
+
 ### Summary  and differences for weekend and weekday   
 
-```{r, warning=FALSE, message=FALSE}
+
+```r
 summary(imputets$average[imputets$day=="weekday"])
+```
+
+```
+##    Min. 1st Qu.  Median    Mean 3rd Qu.    Max. 
+##   0.000   2.247  25.803  35.611  50.854 230.378
+```
+
+```r
 summary(imputets$average[imputets$day=="weekend"])
+```
+
+```
+##    Min. 1st Qu.  Median    Mean 3rd Qu.    Max. 
+##   0.000   1.241  32.340  42.366  74.654 166.639
 ```
 
 We notice that the mean and median are higher in the weekend than in the weekday, and that the maximum value in the weekend is less than that of the weekday. Also, from the graph, we notice that around 5:00 am to around 8:30 am the average in the weekend is less than that of the weekday.
